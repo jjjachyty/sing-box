@@ -9,6 +9,7 @@ import (
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
 	"github.com/sagernet/sing-box/common/mux"
+	"github.com/sagernet/sing-box/common/ratelimiter"
 	"github.com/sagernet/sing-box/common/tls"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
@@ -21,6 +22,7 @@ import (
 	F "github.com/sagernet/sing/common/format"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/service"
 )
 
 func RegisterInbound(registry *inbound.Registry) {
@@ -194,6 +196,10 @@ func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata ada
 		user = F.ToString(userIndex)
 	} else {
 		metadata.User = user
+	}
+	// NEW: apply runtime speed limit if configured
+	if rateLimiter := service.FromContext[*ratelimiter.Manager](ctx); rateLimiter != nil {
+		conn = rateLimiter.WrapConn(conn, user)
 	}
 	h.logger.InfoContext(ctx, "[", user, "] inbound connection to ", metadata.Destination)
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)

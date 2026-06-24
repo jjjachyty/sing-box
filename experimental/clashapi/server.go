@@ -15,6 +15,7 @@ import (
 
 	"github.com/sagernet/cors"
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing-box/common/ratelimiter"
 	"github.com/sagernet/sing-box/common/trafficcontrol"
 	"github.com/sagernet/sing-box/common/urltest"
 	C "github.com/sagernet/sing-box/constant"
@@ -50,6 +51,7 @@ type Server struct {
 	logger         log.Logger
 	httpServer     *http.Server
 	trafficManager *trafficcontrol.Manager
+	rateLimiter    *ratelimiter.Manager
 	urlTestHistory *urltest.HistoryStorage
 	logDebug       bool
 
@@ -93,6 +95,9 @@ func NewServer(ctx context.Context, logFactory log.ObservableFactory, options op
 		externalController:       options.ExternalController != "",
 		externalUIDownloadURL:    options.ExternalUIDownloadURL,
 		externalUIDownloadDetour: options.ExternalUIDownloadDetour,
+		// NEW: 初始化 runtime 限速管理器
+		// 默认不启用连接限速，等 API 调用 SetLimit 后生效
+		rateLimiter:              ratelimiter.NewManager(),
 	}
 	defaultMode := "Rule"
 	if options.DefaultMode != "" {
@@ -135,6 +140,7 @@ func NewServer(ctx context.Context, logFactory log.ObservableFactory, options op
 		r.Mount("/profile", profileRouter())
 		r.Mount("/cache", cacheRouter(ctx))
 		r.Mount("/dns", dnsRouter(s.dnsRouter))
+		r.Mount("/speedlimit", speedLimitRouter(s)) // NEW: runtime speed limit API
 
 		s.setupMetaAPI(r)
 	})
