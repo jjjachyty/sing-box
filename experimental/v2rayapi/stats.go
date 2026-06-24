@@ -118,6 +118,10 @@ func (s *StatsService) RoutedPacketConnection(ctx context.Context, conn N.Packet
 	return bufio.NewInt64CounterPacketConn(conn, readCounter, nil, writeCounter, nil)
 }
 
+func (s *StatsService) CloseConnectionsByUser(user string) (int, error) {
+	return 0, nil
+}
+
 func (s *StatsService) GetStats(ctx context.Context, request *GetStatsRequest) (*GetStatsResponse, error) {
 	s.access.Lock()
 	counter, loaded := s.counters[request.Name]

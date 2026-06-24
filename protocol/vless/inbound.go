@@ -9,11 +9,10 @@ import (
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
 	"github.com/sagernet/sing-box/common/mux"
-	"github.com/sagernet/sing-box/common/tls"
 	"github.com/sagernet/sing-box/common/ratelimiter"
+	"github.com/sagernet/sing-box/common/tls"
 	"github.com/sagernet/sing-box/common/uot"
 
-	"github.com/sagernet/sing/service"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
@@ -28,6 +27,7 @@ import (
 	"github.com/sagernet/sing/common/logger"
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
+	"github.com/sagernet/sing/service"
 )
 
 func RegisterInbound(registry *inbound.Registry) {
@@ -165,6 +165,24 @@ func (h *Inbound) NewConnection(ctx context.Context, conn net.Conn, metadata ada
 		N.CloseOnHandshakeFailure(conn, onClose, err)
 		h.logger.ErrorContext(ctx, E.Cause(err, "process connection from ", metadata.Source))
 	}
+}
+
+func (h *Inbound) UpdateUsers(users []adapter.UserEntry) error {
+	h.service.UpdateUsers(common.MapIndexed(users, func(index int, it adapter.UserEntry) int {
+		return index
+	}), common.Map(users, func(it adapter.UserEntry) string {
+		return it.UUID
+	}), common.Map(users, func(it adapter.UserEntry) string {
+		return it.Flow
+	}))
+	h.users = common.Map(users, func(it adapter.UserEntry) option.VLESSUser {
+		return option.VLESSUser{
+			Name: it.Name,
+			UUID: it.UUID,
+			Flow: it.Flow,
+		}
+	})
+	return nil
 }
 
 func (h *Inbound) newConnectionEx(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {

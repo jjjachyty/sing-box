@@ -197,6 +197,20 @@ func NewInbound(ctx context.Context, router adapter.Router, logger log.ContextLo
 	return inbound, nil
 }
 
+func (h *Inbound) UpdateUsers(users []adapter.UserEntry) error {
+	userList := make([]int, 0, len(users))
+	userNameList := make([]string, 0, len(users))
+	userPasswordList := make([]string, 0, len(users))
+	for index, user := range users {
+		userList = append(userList, index)
+		userNameList = append(userNameList, user.Name)
+		userPasswordList = append(userPasswordList, user.Password)
+	}
+	h.service.UpdateUsers(userList, userPasswordList)
+	h.userNameList = userNameList
+	return nil
+}
+
 func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.Socksaddr, destination M.Socksaddr, onClose N.CloseHandlerFunc) {
 	ctx = log.ContextWithNewID(ctx)
 	var metadata adapter.InboundContext

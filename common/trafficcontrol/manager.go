@@ -159,6 +159,19 @@ func (m *Manager) CloseAllConnections() {
 	})
 }
 
+// CloseConnectionsByUser closes all active connections where Metadata.User == user.
+func (m *Manager) CloseConnectionsByUser(user string) (int, error) {
+	var closed int
+	m.connections.Range(func(_ uuid.UUID, tracker Tracker) bool {
+		if tracker.Metadata().Metadata.User == user {
+			tracker.Close()
+			closed++
+		}
+		return true
+	})
+	return closed, nil
+}
+
 func (m *Manager) Clear() {
 	m.closedConnectionsAccess.Lock()
 	defer m.closedConnectionsAccess.Unlock()

@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/sagernet/sing-box/adapter"
+	"github.com/sagernet/sing/common"
 	E "github.com/sagernet/sing/common/exceptions"
 )
 
@@ -23,18 +24,21 @@ func NewUserManager(inbound adapter.ManagedSSMServer, trafficManager *TrafficMan
 }
 
 func (m *UserManager) postUpdate(updated bool) error {
-	users := make([]string, 0, len(m.usersMap))
-	uPSKs := make([]string, 0, len(m.usersMap))
+	userEntries := make([]adapter.UserEntry, 0, len(m.usersMap))
 	for username, password := range m.usersMap {
-		users = append(users, username)
-		uPSKs = append(uPSKs, password)
+		userEntries = append(userEntries, adapter.UserEntry{
+			Name:     username,
+			Password: password,
+		})
 	}
-	err := m.server.UpdateUsers(users, uPSKs)
+	err := m.server.UpdateUsers(userEntries)
 	if err != nil {
 		return err
 	}
 	if updated {
-		m.trafficManager.UpdateUsers(users)
+		m.trafficManager.UpdateUsers(common.Map(userEntries, func(it adapter.UserEntry) string {
+			return it.Name
+		}))
 	}
 	return nil
 }

@@ -183,6 +183,24 @@ func (h *Inbound) NewConnection(ctx context.Context, conn net.Conn, metadata ada
 	}
 }
 
+func (h *Inbound) UpdateUsers(users []adapter.UserEntry) error {
+	err := h.service.UpdateUsers(common.MapIndexed(users, func(index int, it adapter.UserEntry) int {
+		return index
+	}), common.Map(users, func(it adapter.UserEntry) string {
+		return it.Password
+	}))
+	if err != nil {
+		return err
+	}
+	h.users = common.Map(users, func(it adapter.UserEntry) option.TrojanUser {
+		return option.TrojanUser{
+			Name:     it.Name,
+			Password: it.Password,
+		}
+	})
+	return nil
+}
+
 func (h *Inbound) newConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, onClose N.CloseHandlerFunc) {
 	metadata.Inbound = h.Tag()
 	metadata.InboundType = h.Type()

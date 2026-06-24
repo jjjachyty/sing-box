@@ -9,7 +9,7 @@ import (
 type ManagedSSMServer interface {
 	Inbound
 	SetTracker(tracker SSMTracker)
-	UpdateUsers(users []string, uPSKs []string) error
+	UpdateUsers(users []UserEntry) error
 }
 
 type SSMTracker interface {

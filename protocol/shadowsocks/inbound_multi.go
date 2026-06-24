@@ -122,16 +122,19 @@ func (h *MultiInbound) SetTracker(tracker adapter.SSMTracker) {
 	h.tracker = tracker
 }
 
-func (h *MultiInbound) UpdateUsers(users []string, uPSKs []string) error {
-	err := h.service.UpdateUsersWithPasswords(common.MapIndexed(users, func(index int, user string) int {
+func (h *MultiInbound) UpdateUsers(users []adapter.UserEntry) error {
+	err := h.service.UpdateUsersWithPasswords(common.MapIndexed(users, func(index int, it adapter.UserEntry) int {
 		return index
-	}), uPSKs)
+	}), common.Map(users, func(it adapter.UserEntry) string {
+		return it.Password
+	}))
 	if err != nil {
 		return err
 	}
-	h.users = common.Map(users, func(user string) option.ShadowsocksUser {
+	h.users = common.Map(users, func(it adapter.UserEntry) option.ShadowsocksUser {
 		return option.ShadowsocksUser{
-			Name: user,
+			Name: it.Name,
+			Password: it.Password,
 		}
 	})
 	return nil

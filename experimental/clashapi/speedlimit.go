@@ -11,7 +11,7 @@ import (
 
 // SpeedLimitRequest 设置/更新限速请求体
 type SpeedLimitRequest struct {
-	Name        string `json:"name"`         // 用户标签，如 "5M" / "20M"
+	Name        string `json:"name"`          // 用户标签，如 "5M" / "20M"
 	BytesPerSec int64  `json:"bytes_per_sec"` // 字节/秒，0 表示取消限速
 }
 

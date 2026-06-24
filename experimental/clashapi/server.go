@@ -97,7 +97,7 @@ func NewServer(ctx context.Context, logFactory log.ObservableFactory, options op
 		externalUIDownloadDetour: options.ExternalUIDownloadDetour,
 		// NEW: 初始化 runtime 限速管理器
 		// 默认不启用连接限速，等 API 调用 SetLimit 后生效
-		rateLimiter:              ratelimiter.NewManager(),
+		rateLimiter: ratelimiter.NewManager(),
 	}
 	defaultMode := "Rule"
 	if options.DefaultMode != "" {
@@ -141,6 +141,7 @@ func NewServer(ctx context.Context, logFactory log.ObservableFactory, options op
 		r.Mount("/cache", cacheRouter(ctx))
 		r.Mount("/dns", dnsRouter(s.dnsRouter))
 		r.Mount("/speedlimit", speedLimitRouter(s)) // NEW: runtime speed limit API
+		r.Mount("/users", usersRouter(s))           // NEW: runtime user update/close API
 
 		s.setupMetaAPI(r)
 	})
