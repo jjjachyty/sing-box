@@ -14,7 +14,7 @@ import (
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
 	"github.com/sagernet/sing-box/option"
-	"github.com/sagernet/sing-shadowsocks"
+	shadowsocks "github.com/sagernet/sing-shadowsocks"
 	"github.com/sagernet/sing-shadowsocks/shadowaead"
 	"github.com/sagernet/sing-shadowsocks/shadowaead_2022"
 	"github.com/sagernet/sing/common"
@@ -133,7 +133,7 @@ func (h *MultiInbound) UpdateUsers(users []adapter.UserEntry) error {
 	}
 	h.users = common.Map(users, func(it adapter.UserEntry) option.ShadowsocksUser {
 		return option.ShadowsocksUser{
-			Name: it.Name,
+			Name:     it.Name,
 			Password: it.Password,
 		}
 	})

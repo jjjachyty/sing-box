@@ -5,7 +5,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/sagernet/sing-tun"
+	tun "github.com/sagernet/sing-tun"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/x/list"
 

@@ -12,15 +12,15 @@ import (
 
 // UserUpdateRequest sets the full user list for a given inbound tag.
 type UserUpdateRequest struct {
-	Tag   string               `json:"tag"`
+	Tag   string              `json:"tag"`
 	Users []adapter.UserEntry `json:"users"`
 }
 
 // UserUpdateResponse is the result of updating users.
 type UserUpdateResponse struct {
-	Tag     string `json:"tag"`
-	Count   int    `json:"count"`
-	Status  string `json:"status"`
+	Tag    string `json:"tag"`
+	Count  int    `json:"count"`
+	Status string `json:"status"`
 }
 
 // UserCloseRequest closes all active connections for a specific user.
