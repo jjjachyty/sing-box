@@ -10,6 +10,7 @@ import (
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
 	"github.com/sagernet/sing-box/common/mux"
+	"github.com/sagernet/sing-box/common/ratelimiter"
 	"github.com/sagernet/sing-box/common/uot"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
@@ -26,6 +27,7 @@ import (
 	M "github.com/sagernet/sing/common/metadata"
 	N "github.com/sagernet/sing/common/network"
 	"github.com/sagernet/sing/common/ntp"
+	"github.com/sagernet/sing/service"
 )
 
 var (
@@ -181,6 +183,10 @@ func (h *MultiInbound) newConnection(ctx context.Context, conn net.Conn, metadat
 	if h.tracker != nil {
 		conn = h.tracker.TrackConnection(conn, metadata)
 	}
+	// NEW: apply runtime speed limit if configured
+	if rateLimiter := service.FromContext[*ratelimiter.Manager](ctx); rateLimiter != nil {
+		conn = rateLimiter.WrapConn(conn, metadata.User)
+	}
 	return h.router.RouteConnection(ctx, conn, metadata)
 }
 
@@ -205,6 +211,10 @@ func (h *MultiInbound) newPacketConnection(ctx context.Context, conn N.PacketCon
 	//nolint:staticcheck
 	if h.tracker != nil {
 		conn = h.tracker.TrackPacketConnection(conn, metadata)
+	}
+	// NEW: apply runtime speed limit if configured
+	if rateLimiter := service.FromContext[*ratelimiter.Manager](ctx); rateLimiter != nil {
+		conn = rateLimiter.WrapPacketConn(conn, metadata.User)
 	}
 	return h.router.RoutePacketConnection(ctx, conn, metadata)
 }

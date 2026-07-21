@@ -12,6 +12,7 @@ import (
 	"github.com/sagernet/sing-box/adapter"
 	"github.com/sagernet/sing-box/adapter/inbound"
 	"github.com/sagernet/sing-box/common/listener"
+	"github.com/sagernet/sing-box/common/ratelimiter"
 	"github.com/sagernet/sing-box/common/tls"
 	C "github.com/sagernet/sing-box/constant"
 	"github.com/sagernet/sing-box/log"
@@ -230,6 +231,10 @@ func (h *Inbound) NewConnectionEx(ctx context.Context, conn net.Conn, source M.S
 	} else {
 		h.logger.InfoContext(ctx, "inbound connection to ", metadata.Destination)
 	}
+	// NEW: apply runtime speed limit if configured
+	if rateLimiter := service.FromContext[*ratelimiter.Manager](ctx); rateLimiter != nil {
+		conn = rateLimiter.WrapConn(conn, metadata.User)
+	}
 	h.router.RouteConnectionEx(ctx, conn, metadata, onClose)
 }
 
@@ -251,6 +256,10 @@ func (h *Inbound) NewPacketConnectionEx(ctx context.Context, conn N.PacketConn, 
 		h.logger.InfoContext(ctx, "[", userName, "] inbound packet connection to ", metadata.Destination)
 	} else {
 		h.logger.InfoContext(ctx, "inbound packet connection to ", metadata.Destination)
+	}
+	// NEW: apply runtime speed limit if configured
+	if rateLimiter := service.FromContext[*ratelimiter.Manager](ctx); rateLimiter != nil {
+		conn = rateLimiter.WrapPacketConn(conn, metadata.User)
 	}
 	h.router.RoutePacketConnectionEx(ctx, conn, metadata, onClose)
 }

@@ -4,6 +4,7 @@ import (
 	"io"
 	"net"
 	"sync"
+	"time"
 
 	"github.com/sagernet/sing/common/buf"
 	M "github.com/sagernet/sing/common/metadata"
@@ -34,7 +35,7 @@ func (m *Manager) SetLimit(name string, bytesPerSec int64) {
 		return
 	}
 	m.buckets[name] = ratelimit.NewBucketWithQuantum(
-		1,             // 填充周期 1秒
+		time.Second,   // 填充周期 1秒
 		bytesPerSec*2, // 容量
 		bytesPerSec,   // 每周期填充量
 	)

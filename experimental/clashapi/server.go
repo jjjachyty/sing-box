@@ -99,6 +99,9 @@ func NewServer(ctx context.Context, logFactory log.ObservableFactory, options op
 		// 默认不启用连接限速，等 API 调用 SetLimit 后生效
 		rateLimiter: ratelimiter.NewManager(),
 	}
+	// NEW: 注册到 service context，供各协议 inbound 通过
+	// service.FromContext[*ratelimiter.Manager](ctx) 获取
+	service.MustRegister[*ratelimiter.Manager](ctx, s.rateLimiter)
 	defaultMode := "Rule"
 	if options.DefaultMode != "" {
 		defaultMode = options.DefaultMode

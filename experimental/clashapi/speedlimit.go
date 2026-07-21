@@ -2,8 +2,6 @@ package clashapi
 
 import (
 	"net/http"
-	"strconv"
-	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
@@ -73,7 +71,6 @@ func deleteSpeedLimit(s *Server) func(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		name := chi.URLParam(r, "name")
-		name, _ = strconv.Unquote(strings.TrimSpace(name))
 		if name == "" {
 			render.Status(r, http.StatusBadRequest)
 			render.JSON(w, r, render.M{"error": "name is required"})
