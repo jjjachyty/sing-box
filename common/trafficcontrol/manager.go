@@ -160,6 +160,19 @@ func (m *Manager) UserTraffic() map[string][2]int64 {
 	return result
 }
 
+// OnlineUsers returns the number of distinct users with at least one
+// active connection.
+func (m *Manager) OnlineUsers() int {
+	seen := make(map[string]bool)
+	m.connections.Range(func(_ uuid.UUID, tracker Tracker) bool {
+		if user := tracker.Metadata().Metadata.User; user != "" {
+			seen[user] = true
+		}
+		return true
+	})
+	return len(seen)
+}
+
 func (m *Manager) ConnectionsLen() int {
 	return m.connections.Len()
 }

@@ -11,6 +11,8 @@ import (
 type UserTrafficResponse struct {
 	// Users maps user name (uuid) to [upload, download] bytes.
 	Users map[string][2]int64 `json:"users"`
+	// Online is the number of distinct users with active connections.
+	Online int `json:"online"`
 }
 
 func trafficRouter(s *Server) http.Handler {
@@ -22,7 +24,8 @@ func trafficRouter(s *Server) http.Handler {
 func getUserTraffic(s *Server) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		render.JSON(w, r, UserTrafficResponse{
-			Users: s.trafficManager.UserTraffic(),
+			Users:  s.trafficManager.UserTraffic(),
+			Online: s.trafficManager.OnlineUsers(),
 		})
 	}
 }
