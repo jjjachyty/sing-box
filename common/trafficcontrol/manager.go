@@ -44,6 +44,9 @@ type Manager struct {
 	closedConnectionsAccess sync.Mutex
 	closedConnections       list.List[TrackerMetadata]
 
+	// NEW: per-user traffic accumulator, keyed by Metadata.User
+	userTraffic sync.Map
+
 	eventSubscriber *observable.Subscriber[ConnectionEvent]
 	eventObserver   *observable.Observer[ConnectionEvent]
 	cleaner         *cleanup.Cleaner
@@ -98,6 +101,10 @@ func (m *Manager) leave(tracker Tracker) {
 	}
 	closedAt := time.Now()
 	metadata.ClosedAt = closedAt
+	// NEW: fold the closed connection's bytes into the per-user accumulator
+	if user := metadata.Metadata.User; user != "" {
+		m.addUserTraffic(user, metadata.Upload.Load(), metadata.Download.Load())
+	}
 	metadataCopy := *metadata
 	m.closedConnectionsAccess.Lock()
 	if m.closedConnections.Len() >= closedConnectionsLimit {
@@ -115,6 +122,42 @@ func (m *Manager) leave(tracker Tracker) {
 
 func (m *Manager) Total() (uplinkTotal int64, downlinkTotal int64) {
 	return m.uploadTotal.Load(), m.downloadTotal.Load()
+}
+
+// userTrafficCounter accumulates bytes of closed connections for one user.
+type userTrafficCounter struct {
+	upload   atomic.Int64
+	download atomic.Int64
+}
+
+func (m *Manager) addUserTraffic(user string, upload, download int64) {
+	v, _ := m.userTraffic.LoadOrStore(user, &userTrafficCounter{})
+	c := v.(*userTrafficCounter)
+	c.upload.Add(upload)
+	c.download.Add(download)
+}
+
+// UserTraffic returns per-user traffic totals (upload, download) since
+// process start: bytes of closed connections plus bytes still in flight
+// on active connections.
+func (m *Manager) UserTraffic() map[string][2]int64 {
+	result := make(map[string][2]int64)
+	m.userTraffic.Range(func(key, value any) bool {
+		c := value.(*userTrafficCounter)
+		result[key.(string)] = [2]int64{c.upload.Load(), c.download.Load()}
+		return true
+	})
+	m.connections.Range(func(_ uuid.UUID, tracker Tracker) bool {
+		md := tracker.Metadata()
+		if user := md.Metadata.User; user != "" {
+			t := result[user]
+			t[0] += md.Upload.Load()
+			t[1] += md.Download.Load()
+			result[user] = t
+		}
+		return true
+	})
+	return result
 }
 
 func (m *Manager) ConnectionsLen() int {

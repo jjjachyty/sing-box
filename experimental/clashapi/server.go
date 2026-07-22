@@ -145,6 +145,7 @@ func NewServer(ctx context.Context, logFactory log.ObservableFactory, options op
 		r.Mount("/dns", dnsRouter(s.dnsRouter))
 		r.Mount("/speedlimit", speedLimitRouter(s)) // NEW: runtime speed limit API
 		r.Mount("/users", usersRouter(s))           // NEW: runtime user update/close API
+		r.Mount("/traffic", trafficRouter(s))       // NEW: per-user traffic accounting API
 
 		s.setupMetaAPI(r)
 	})
