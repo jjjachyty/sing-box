@@ -33,6 +33,11 @@ type Tracker interface {
 }
 
 func (m *Manager) RoutedConnection(ctx context.Context, conn net.Conn, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) net.Conn {
+	// NEW: enforce per-user connection/device limits at connection time
+	if user := metadata.User; user != "" && !m.allowConnection(user, metadata.Source.AddrString()) {
+		conn.Close()
+		return conn
+	}
 	upload := new(atomic.Int64)
 	download := new(atomic.Int64)
 	tracker := &connTracker{
@@ -51,6 +56,11 @@ func (m *Manager) RoutedConnection(ctx context.Context, conn net.Conn, metadata 
 }
 
 func (m *Manager) RoutedPacketConnection(ctx context.Context, conn N.PacketConn, metadata adapter.InboundContext, matchedRule adapter.Rule, matchOutbound adapter.Outbound) N.PacketConn {
+	// NEW: enforce per-user connection/device limits at connection time
+	if user := metadata.User; user != "" && !m.allowConnection(user, metadata.Source.AddrString()) {
+		conn.Close()
+		return conn
+	}
 	upload := new(atomic.Int64)
 	download := new(atomic.Int64)
 	tracker := &packetConnTracker{
