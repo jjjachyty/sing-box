@@ -73,10 +73,12 @@ func buildOptions(ctx context.Context, nc *api.NodeConfigResponse, users []api.N
 		},
 		"route": map[string]interface{}{
 			"rules": []map[string]interface{}{
+				{"action": "sniff"},
+				{"protocol": "dns", "action": "hijack-dns"},
 				{"network": "tcp,udp", "outbound": "direct"},
 			},
 			"final":                   "direct",
-			"default_domain_resolver": "local",
+			"default_domain_resolver": "google",
 		},
 		"experimental": map[string]interface{}{
 			// NEW: empty external_controller => clash API services are created
